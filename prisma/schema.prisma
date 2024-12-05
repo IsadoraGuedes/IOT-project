@@ -10,14 +10,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Recipe {
+model PatientData {
   id String @id @default(cuid())
   name String
-  servings Int?
-  prepTime Int?
-  ingredients String?
-  instructions String?
-  imageUrl String?
+  session String
+  value Float
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }

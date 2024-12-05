@@ -14,12 +14,6 @@ export function PatientForm({ onSubmit } : { onSubmit: (data: FormData) => void}
         numeroDaSessao: ''
     });
 
-  //   const [submittedData, setSubmittedData] = useState({
-  //     nomeDoPaciente: '',
-  //     regiaoDeMedicao: '',
-  //     numeroDaSessao: ''
-  // });
-
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({

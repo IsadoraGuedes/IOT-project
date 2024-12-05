@@ -1,19 +1,18 @@
 import { useState } from "react";
 import mqtt from "mqtt";
 import { PatientForm } from "./patientForm";
-import { PatientData } from "./patientData";
 import prisma from "./database/db";
 
 export async function getServerSideProps() {
   console.log("getServerSideProps executing...");
 
-  const recipes = await prisma.recipe.findMany();
+  const recipes = await prisma.patientData.findMany();
 
   // Convert Date objects to ISO strings for serialization
   const serializedRecipes = recipes.map(recipe => ({
       ...recipe,
       createdAt: recipe.createdAt.toISOString(),
-      updatedAt: recipe.updatedAt.toISOString()
+      // updatedAt: recipe.updatedAt.toISOString()
   }));
 
   return {

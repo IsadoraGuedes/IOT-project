@@ -2,6 +2,33 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
+const patientData = [
+    {
+        name: "Rhysand",
+        session: "1",
+        value: 10.5
+    },
+    {
+        name: "Rhysand",
+        session: "2",
+        value: 8.5
+    },
+    {
+        name: "John Snow",
+        session: "1",
+        value: 200.3
+    },
+    {
+        name: "Rhysand",
+        session: "3",
+        value: 18.5
+    },
+    {
+        name: "John Snow",
+        session: "2",
+        value: 11.33
+    }
+]
 const recipes = [
   {
     name: 'Spaghetti Carbonara',
@@ -61,11 +88,11 @@ const recipes = [
 async function seedData() {
   console.log('Seeding...')
 
-  for (const recipe of recipes) {
-    const result = await prisma.recipe.create({
-      data: recipe,
+  for (const ptData of patientData) {
+    const result = await prisma.patientData.create({
+      data: ptData,
     })
-    console.log(`Created recipe with id: ${result.id}`)
+    console.log(`Created patient date with id: ${result.id}`)
   }
 
   console.log('Finished seeding.')
