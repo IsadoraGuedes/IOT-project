@@ -106,16 +106,16 @@ export default function Home({ patientData }) {
           <PatientForm onSubmit={handleFormSubmit} />
         ) : (
           <div>
-            <Typography variant="h3" gutterBottom>
+            <Typography variant="h5" gutterBottom>
               Dados das sessões
             </Typography>
-            <Typography variant="h6" gutterBottom>
+            <Typography variant="subtitle1" gutterBottom>
               Paciente: { formData.nomeDoPaciente }
             </Typography>
-            <Typography variant="h6" gutterBottom>
+            <Typography variant="subtitle1" gutterBottom>
               Região: { formData.regiaoDeMedicao }
             </Typography>
-            <Typography variant="h6" gutterBottom>
+            <Typography variant="subtitle1" gutterBottom>
               Sessão atual: { formData.numeroDaSessao }
             </Typography>
             <MetricsTable data={patientData} />
