@@ -3,11 +3,11 @@ import prisma from '../../pages/database/db';
 export default async function handler(req, res) {
     if (req.method === 'POST') {
         try {
-            const { name, session, value, createdAt } = req.body;
+            const { name, session, value, bodyArea, createdAt } = req.body;
 
             // Save data to the PatientData model
             const newPatientData = await prisma.patientData.create({
-                data: { name, session, value, createdAt: new Date(createdAt) },
+                data: { name, session, value, bodyArea, createdAt: new Date(createdAt) },
             });
 
             res.status(201).json(newPatientData);

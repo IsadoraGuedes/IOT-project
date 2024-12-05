@@ -46,9 +46,10 @@ export default function Home({ recipes }) {
         setMessages((prevMessages) => [...prevMessages, msg]);
 
         console.log(JSON.stringify({
-          name: 'MQTT Patient',
-          session: topic,
+          name: formData.nomeDoPaciente,
+          session: formData.numeroDaSessao,
           value: parseFloat(msg),
+          bodyArea: formData.regiaoDeMedicao,
           createdAt: new Date().toISOString(),
       }))
         try {
@@ -58,9 +59,10 @@ export default function Home({ recipes }) {
                   'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                  name: 'MQTT Patient',
-                  session: topic,
+                  name: formData.nomeDoPaciente,
+                  session: formData.numeroDaSessao,
                   value: parseFloat(msg),
+                  bodyArea: formData.regiaoDeMedicao,
                   createdAt: new Date().toISOString(),
               }),
           });

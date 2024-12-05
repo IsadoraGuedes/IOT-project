@@ -15,5 +15,6 @@ model PatientData {
   name String
   session String
   value Float
+  bodyArea String 
   createdAt DateTime @default(now())
 }
