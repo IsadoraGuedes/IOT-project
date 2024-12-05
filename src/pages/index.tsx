@@ -6,21 +6,21 @@ import prisma from "./database/db";
 export async function getServerSideProps() {
   console.log("getServerSideProps executing...");
 
-  const recipes = await prisma.patientData.findMany();
+  const patientData = await prisma.patientData.findMany();
 
   // Convert Date objects to ISO strings for serialization
-  const serializedRecipes = recipes.map(recipe => ({
-      ...recipe,
-      createdAt: recipe.createdAt.toISOString(),
+  const serializedRecipes = patientData.map(patientData => ({
+      ...patientData,
+      createdAt: patientData.createdAt.toISOString(),
       // updatedAt: recipe.updatedAt.toISOString()
   }));
 
   return {
-      props: { recipes: serializedRecipes },
+      props: { patientData: serializedRecipes },
   };
 }
 
-export default function Home({ recipes }) {
+export default function Home({ patientData }) {
   const [messages, setMessages] = useState<string[]>([]);
 
     // Connect and subscribe directly
@@ -100,7 +100,7 @@ export default function Home({ recipes }) {
                 <PatientForm onSubmit={handleFormSubmit} />
             ) : (
                 <div>
-                     <pre>{JSON.stringify(recipes, null, 2)}</pre>
+                     <pre>{JSON.stringify(patientData, null, 2)}</pre>
                 </div>
             )}
       </div>
