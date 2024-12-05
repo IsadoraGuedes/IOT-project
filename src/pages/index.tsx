@@ -40,10 +40,34 @@ export default function Home({ recipes }) {
         });
     });
 
-    client.on('message', (topic, message) => {
+    client.on('message', async (topic, message) => {
         const msg = message.toString();
         console.log(`Message received on ${topic}: ${msg}`);
         setMessages((prevMessages) => [...prevMessages, msg]);
+
+        console.log(JSON.stringify({
+          name: 'MQTT Patient',
+          session: topic,
+          value: parseFloat(msg),
+          createdAt: new Date().toISOString(),
+      }))
+        try {
+          await fetch('http://localhost:3000/api/patient-data', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                  name: 'MQTT Patient',
+                  session: topic,
+                  value: parseFloat(msg),
+                  createdAt: new Date().toISOString(),
+              }),
+          });
+          console.log('Data added to PatientData');
+      } catch (error) {
+          console.error('Failed to add data:', error);
+      }
     });
 
     client.on('error', (err) => {
