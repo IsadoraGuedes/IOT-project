@@ -12,6 +12,12 @@
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} src/pages/database/seed.ts"
   },
   "dependencies": {
+    "@emotion/cache": "^11.13.5",
+    "@emotion/react": "^11.13.5",
+    "@emotion/server": "^11.11.0",
+    "@emotion/styled": "^11.13.5",
+    "@mui/material": "^6.1.10",
+    "@mui/material-nextjs": "^6.1.9",
     "@prisma/client": "^6.0.1",
     "mqtt": "^5.10.2",
     "next": "15.0.3",
