@@ -45,7 +45,7 @@ const Patient: React.FC = () => {
         const formattedMetrics = metrics.map((metric: any) => ({
             id: metric.id,
             value: metric.value,
-            session: session,
+            session: metric.session,
         }));
         console.log("formattedMetrics", formattedMetrics);
         return formattedMetrics;
