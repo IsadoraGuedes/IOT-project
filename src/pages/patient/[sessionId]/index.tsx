@@ -3,6 +3,7 @@ import Typography from "@mui/material/Typography";
 import MetricsTable from "@/pages/metricsTable";
 import { useParams, useRouter } from "next/navigation";
 import mqtt from "mqtt";
+import Button from "@mui/material/Button";
 
 const Patient: React.FC = () => {
     const brokerUrl = "wss://broker.hivemq.com:8884/mqtt";
@@ -11,7 +12,7 @@ const Patient: React.FC = () => {
     const [name, setName] = useState("");
     const [bodyArea, setBodyArea] = useState("");
     const [session, setSession] = useState(0);
-    const [data, setData] = useState([]);
+    const [data, setData] = useState<any[]>([]);
     const params = useParams();
     const router = useRouter();
     const client = mqtt.connect(brokerUrl);
@@ -55,13 +56,23 @@ const Patient: React.FC = () => {
     });
 
     client.on("message", async (topic, message) => {
+        //TODO: avoid saving duplicated messages
         const msg = message.toString();
         console.log(`Message received on ${topic}: ${msg}`);
+
+        const value = parseFloat(msg);
+
+        if (isNaN(value)) {
+            console.log("Invalid value:", msg);
+            return;
+        }
 
         const body = JSON.stringify({
             patientSessionId: params.sessionId,
             value: parseFloat(msg),
         });
+
+        console.log("metric body", body);
 
         try {
             const response = await fetch("http://localhost:3000/api/metric-data", {
@@ -73,9 +84,14 @@ const Patient: React.FC = () => {
             });
 
             const metric = await response.json();
+            const formattedMetric = {
+                id: metric.id,
+                value,
+                session
+            }
 
-            console.log("Metric created", [...data, metric]);
-            // setData([...data, metric]);
+            setData((prevData) => [...prevData, formattedMetric]);
+            console.log("Metric created", data);
         } catch (error) {
             console.error("Failed to add data:", error);
         }
@@ -106,6 +122,9 @@ const Patient: React.FC = () => {
                 </Typography>
                 <MetricsTable data={data} />
             </div>
+            <Button fullWidth variant="contained" onClick={finish} width="50%">
+                Finalizar Atendimento
+            </Button>
         </div>
     );
 }
