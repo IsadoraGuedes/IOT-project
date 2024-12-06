@@ -7,19 +7,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Patient {
-  id             String           @id @default(cuid())
-  name           String
-  PatientSession PatientSession[]
-}
-
 model PatientSession {
-  id            String          @id @default(cuid())
-  patientId     String
-  bodyArea      String
-  session       String
-  patient       Patient         @relation(fields: [patientId], references: [id])
-  MetricSession MetricSession[]
+  id             String          @id @default(cuid())
+  name           String
+  bodyArea       String
+  session        String
+  MetricSessions MetricSession[]
 }
 
 model MetricSession {

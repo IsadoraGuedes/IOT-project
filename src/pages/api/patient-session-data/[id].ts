@@ -3,9 +3,9 @@ import prisma from '../../../pages/database/db';
 export default async function handler(req: any, res: any) {
     if (req.method === "GET") {
         const { id } = req.query;
-        const data = await prisma.patient.findMany({
+        const data = await prisma.patientSession.findMany({
             where: {
-                name: id,
+                id,
             },
         });
         res.status(200).json(data);

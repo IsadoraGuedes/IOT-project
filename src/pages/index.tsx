@@ -5,36 +5,34 @@ const Home: React.FC = () => {
   const router = useRouter();
 
   const handleFormSubmit = async (data: any) => {
-    console.log(data);
-    const { nomeDoPaciente } = data;
+    try {
+      const session = await createSession(data);
+      router.push(`/patient/${session.id}`);
+    } catch (error) {
+      console.error('Error checking or creating patient', error);
+    }
+  };
+
+  const createSession = async (data: any) => {
+
+    console.log('data', data);
 
     try {
-      const response = await fetch(`/api/patient-data/${nomeDoPaciente}`, {
-        method: 'GET',
+      const body = {
+        name: data.nomeDoPaciente,
+        bodyArea: data.regiaoDeMedicao,
+        session: data.numeroDaSessao
+      };
+
+      const response = await fetch("/api/patient-session-data", {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify(body),
       });
 
-      let patient = await response.json();
-      console.log('Patient searched:', patient);
-
-      if (!patient.length) {
-        const createResponse = await fetch('/api/patient-data', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ name: nomeDoPaciente }),
-        });
-
-        patient = await createResponse.json();
-        console.log('Patient created:', patient);
-      } else {
-        patient = patient[0];
-      }
-
-      router.push(`/patient/${patient.name}`);
+      return await response.json();
     } catch (error) {
       console.error('Error checking or creating patient', error);
     }

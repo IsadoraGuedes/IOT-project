@@ -16,23 +16,30 @@ const Patient: React.FC = () => {
     const router = useRouter();
     const client = mqtt.connect(brokerUrl);
 
+    const searchMetrics = async (sessionId: any) => {
+        //TODO: implement
+        return [];
+    };
+
     useEffect(() => {
-        getPatientData().then(patientData => {
-            fetch(`http://localhost:3000/api/session-data/${patientData.id}`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                }
-            }).then(data => {
-                data.json().then(sessions => {
-                    console.log("session-data", sessions);
-                    setData(sessions);
-                    setSession(1);
-                    setName(patientData.name);
-                    setBodyArea("Região de Medição");
+        console.log("param", params.patientSessionId);
+        fetch(`http://localhost:3000/api/patient-session-data/${params.sessionId}`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            }
+        }).then(data => {
+            data.json().then(sessions => {
+                const session = sessions[0];
+                console.log("session-data", session);
+                setSession(session.session);
+                setName(session.name);
+                setBodyArea(session.bodyArea);
+                searchMetrics(session.id).then(metrics => {
+                    setData(metrics);
                 });
-            }).catch(error => console.error("Failed to add data:", error));
-        });
+            });
+        }).catch(error => console.error("Failed to get data:", error));
 
     }, [params.patientId]);
 
@@ -52,24 +59,23 @@ const Patient: React.FC = () => {
         console.log(`Message received on ${topic}: ${msg}`);
 
         const body = JSON.stringify({
-            patientId: params.patientId,
-            session,
+            patientSessionId: params.sessionId,
             value: parseFloat(msg),
-            bodyArea,
-            createdAt: new Date().toISOString(),
         });
 
-        console.log(body);
-
         try {
-            await fetch("http://localhost:3000/api/session-data", {
+            const response = await fetch("http://localhost:3000/api/metric-data", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body,
             });
-            console.log("Data added to PatientData");
+
+            const metric = await response.json();
+
+            console.log("Metric created", [...data, metric]);
+            // setData([...data, metric]);
         } catch (error) {
             console.error("Failed to add data:", error);
         }
@@ -81,17 +87,6 @@ const Patient: React.FC = () => {
 
     const finish = async () => {
         router.push("/");
-    };
-
-    const getPatientData = async () => {
-        const response = await fetch(`/api/patient-data/${params.name}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        });
-
-        return await response.json();
     };
 
     return (
