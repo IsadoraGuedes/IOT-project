@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,11 +7,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model PatientData {
-  id String @id @default(cuid())
-  name String
-  session String
-  value Float
-  bodyArea String 
-  createdAt DateTime @default(now())
+model PatientSession {
+  id             String          @id @default(cuid())
+  name           String
+  bodyArea       String
+  session        String
+  MetricSessions MetricSession[]
+}
+
+model MetricSession {
+  id               String         @id @default(cuid())
+  patientSessionId String
+  value            Float
+  PatientSession   PatientSession @relation(fields: [patientSessionId], references: [id])
 }

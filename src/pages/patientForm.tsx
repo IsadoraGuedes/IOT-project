@@ -73,7 +73,7 @@ export function PatientForm({
           margin="normal"
         />
         <Button fullWidth variant="contained" type="submit">
-          Contained
+          Iniciar Atendimento
         </Button>
       </form>
     </div>

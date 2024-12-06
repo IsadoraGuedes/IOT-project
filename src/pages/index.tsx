@@ -1,127 +1,48 @@
-import { useState } from "react";
-import mqtt from "mqtt";
 import { PatientForm } from "./patientForm";
-import prisma from "./database/db";
-import MetricsTable from "./metricsTable";
-import Typography from "@mui/material/Typography";
+import { useRouter } from "next/navigation";
 
-export async function getServerSideProps() {
-  console.log("getServerSideProps executing...");
+const Home: React.FC = () => {
+  const router = useRouter();
 
-  const patientData = await prisma.patientData.findMany({
-    where: {
-      name: "Isadora",
-    },
-  });
-
-  // Convert Date objects to ISO strings for serialization
-  const serializedRecipes = patientData.map((patientData) => ({
-    ...patientData,
-    createdAt: patientData.createdAt.toISOString(),
-    // updatedAt: recipe.updatedAt.toISOString()
-  }));
-
-  return {
-    props: { patientData: serializedRecipes },
-  };
-}
-
-export default function Home({ patientData }) {
-  const [messages, setMessages] = useState<string[]>([]);
-
-  // Connect and subscribe directly
-  const brokerUrl = "wss://broker.hivemq.com:8884/mqtt";
-  const topic = "topic_sensor_desconforto_nicisa";
-
-  const client = mqtt.connect(brokerUrl);
-
-  client.on("connect", () => {
-    console.log("Connected to MQTT broker");
-    client.subscribe(topic, (err) => {
-      if (err) {
-        console.error("Failed to subscribe:", err.message);
-      } else {
-        console.log(`Subscribed to topic: ${topic}`);
-      }
-    });
-  });
-
-  client.on("message", async (topic, message) => {
-    const msg = message.toString();
-    console.log(`Message received on ${topic}: ${msg}`);
-    setMessages((prevMessages) => [...prevMessages, msg]);
-
-    console.log(
-      JSON.stringify({
-        name: formData.nomeDoPaciente,
-        session: formData.numeroDaSessao,
-        value: parseFloat(msg),
-        bodyArea: formData.regiaoDeMedicao,
-        createdAt: new Date().toISOString(),
-      })
-    );
+  const handleFormSubmit = async (data: any) => {
     try {
-      await fetch("http://localhost:3000/api/patient-data", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: formData.nomeDoPaciente,
-          session: formData.numeroDaSessao,
-          value: parseFloat(msg),
-          bodyArea: formData.regiaoDeMedicao,
-          createdAt: new Date().toISOString(),
-        }),
-      });
-      console.log("Data added to PatientData");
+      const session = await createSession(data);
+      router.push(`/patient/${session.id}`);
     } catch (error) {
-      console.error("Failed to add data:", error);
+      console.error('Error checking or creating patient', error);
     }
-  });
+  };
 
-  client.on("error", (err) => {
-    console.error("MQTT connection error:", err.message);
-  });
+  const createSession = async (data: any) => {
 
-  const [formData, setFormData] = useState({
-    nomeDoPaciente: "",
-    regiaoDeMedicao: "",
-    numeroDaSessao: "",
-  });
+    console.log('data', data);
 
-  const handleFormSubmit = (data) => {
-    setFormData(data); // Set the form data to display other components
+    try {
+      const body = {
+        name: data.nomeDoPaciente,
+        bodyArea: data.regiaoDeMedicao,
+        session: data.numeroDaSessao
+      };
+
+      const response = await fetch("/api/patient-session-data", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error checking or creating patient', error);
+    }
   };
 
   return (
     <div style={{ padding: "20px" }}>
-      <ul>
-        {messages.map((msg: any, index: any) => (
-          <li key={index}>{msg}</li>
-        ))}
-      </ul>
-      <div>
-        {formData?.nomeDoPaciente === "" ? (
-          <PatientForm onSubmit={handleFormSubmit} />
-        ) : (
-          <div>
-            <Typography variant="h5" gutterBottom>
-              Dados das sessões
-            </Typography>
-            <Typography variant="subtitle1" gutterBottom>
-              Paciente: { formData.nomeDoPaciente }
-            </Typography>
-            <Typography variant="subtitle1" gutterBottom>
-              Região: { formData.regiaoDeMedicao }
-            </Typography>
-            <Typography variant="subtitle1" gutterBottom>
-              Sessão atual: { formData.numeroDaSessao }
-            </Typography>
-            <MetricsTable data={patientData} />
-          </div>
-        )}
-      </div>
+      <PatientForm onSubmit={handleFormSubmit} />
     </div>
   );
 }
+
+export default Home;
