@@ -15,6 +15,7 @@ export default function MetricsTable({ data }) {
           <TableHead>
             <TableRow>
               <TableCell>Sessão</TableCell>
+              <TableCell>ID Métrica</TableCell>
               <TableCell align="right">Valor medido</TableCell>
             </TableRow>
           </TableHead>
@@ -26,6 +27,9 @@ export default function MetricsTable({ data }) {
               >
                 <TableCell component="th" scope="row">
                   {row.session}
+                </TableCell>
+                <TableCell component="th" scope="row">
+                  {row.id}
                 </TableCell>
                 <TableCell align="right">{row.value}</TableCell>
               </TableRow>
