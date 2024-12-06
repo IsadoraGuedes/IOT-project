@@ -34,8 +34,8 @@ const Patient: React.FC = () => {
     };
   };
 
-  const searchMetrics = async (name: any) => {
-    const response = await fetch(`/api/metric-data/${name}`, {
+  const searchMetrics = async (name: any, bodyArea: any) => {
+    const response = await fetch(`/api/metric-data/${name}/${bodyArea}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -66,7 +66,7 @@ const Patient: React.FC = () => {
           setSession(session.session);
           setName(session.name);
           setBodyArea(session.bodyArea);
-          searchMetrics(session.name).then((metrics) => {
+          searchMetrics(session.name, session.bodyArea).then((metrics) => {
             setData(metrics);
           });
         })
@@ -177,18 +177,26 @@ const Patient: React.FC = () => {
         <Typography variant="subtitle1" gutterBottom>
           Sessão atual: {session}
         </Typography>
-        <div style={{ marginTop: "20px" }}>
-          <Typography variant="h6" gutterBottom>
-            Média de pressão das sessões
+        {data.length > 0 ? (
+          <div>
+            <div style={{ marginTop: "20px" }}>
+              <Typography variant="h6" gutterBottom>
+                Média de pressão das sessões
+              </Typography>
+              <PatientChart data={data} />
+            </div>
+            <div style={{ marginTop: "20px" }}>
+              <Typography variant="h6" gutterBottom>
+                Medições realizadas
+              </Typography>
+              <MetricsTable data={data} />
+            </div>{" "}
+          </div>
+        ) : (
+          <Typography variant="subtitle1" gutterBottom color="red">
+            Nenhum dado a ser exibido, realize uma medição.
           </Typography>
-          <PatientChart data={data} />
-        </div>
-        <div style={{ marginTop: "20px" }}>
-          <Typography variant="h6" gutterBottom>
-            Média de pressão das sessões
-          </Typography>
-          <MetricsTable data={data} />
-        </div>
+        )}
         <div style={{ marginTop: "20px" }}>
           <Button fullWidth variant="contained" onClick={finish}>
             Finalizar Atendimento
