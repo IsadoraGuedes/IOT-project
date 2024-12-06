@@ -17,9 +17,23 @@ const Patient: React.FC = () => {
     const router = useRouter();
     const client = mqtt.connect(brokerUrl);
 
-    const searchMetrics = async (sessionId: any) => {
-        //TODO: implement
-        return [];
+    const searchMetrics = async (name: any) => {
+
+        const response = await fetch(`http://localhost:3000/api/metric-data/${name}`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            }
+        });
+
+        const metrics = await response.json();
+        const formattedMetrics = metrics.map((metric: any) => ({
+            id: metric.id,
+            value: metric.value,
+            session: session,
+        }));
+        console.log("formattedMetrics", formattedMetrics);
+        return formattedMetrics;
     };
 
     useEffect(() => {
@@ -36,7 +50,7 @@ const Patient: React.FC = () => {
                 setSession(session.session);
                 setName(session.name);
                 setBodyArea(session.bodyArea);
-                searchMetrics(session.id).then(metrics => {
+                searchMetrics(session.name).then(metrics => {
                     setData(metrics);
                 });
             });
