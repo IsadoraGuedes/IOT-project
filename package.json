@@ -12,6 +12,7 @@
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} src/pages/database/seed.ts"
   },
   "dependencies": {
+    "-": "^0.0.1",
     "@emotion/cache": "^11.13.5",
     "@emotion/react": "^11.13.5",
     "@emotion/server": "^11.11.0",
@@ -19,10 +20,13 @@
     "@mui/material": "^6.1.10",
     "@mui/material-nextjs": "^6.1.9",
     "@prisma/client": "^6.0.1",
+    "chart.js": "^4.4.7",
     "mqtt": "^5.10.2",
     "next": "15.0.3",
     "react": "19.0.0-rc-66855b96-20241106",
+    "react-chartjs-2": "^5.2.0",
     "react-dom": "19.0.0-rc-66855b96-20241106",
+    "save": "^2.9.0",
     "zustand": "^5.0.1"
   },
   "devDependencies": {
