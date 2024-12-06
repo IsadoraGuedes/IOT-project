@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Typography from "@mui/material/Typography";
 import MetricsTable from "@/pages/metricsTable";
 import { useParams, useRouter } from "next/navigation";
@@ -15,15 +15,30 @@ const Patient: React.FC = () => {
     const [data, setData] = useState<any[]>([]);
     const params = useParams();
     const router = useRouter();
-    const client = mqtt.connect(brokerUrl);
+
+    // Ref for processed values to persist across renders
+    const processedValues = useRef(new Set<number>());
+
+    // Ref for the MQTT client to ensure it's a singleton
+    const clientRef = useRef<mqtt.MqttClient | null>(null);
+
+    // Debounce function to limit the rate of processing messages
+    const debounce = (func: Function, delay: number) => {
+        let timeoutId: NodeJS.Timeout;
+        return (...args: any[]) => {
+            if (timeoutId) clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                func(...args);
+            }, delay);
+        };
+    };
 
     const searchMetrics = async (name: any) => {
-
-        const response = await fetch(`http://localhost:3000/api/metric-data/${name}`, {
+        const response = await fetch(`/api/metric-data/${name}`, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
-            }
+            },
         });
 
         const metrics = await response.json();
@@ -37,83 +52,110 @@ const Patient: React.FC = () => {
     };
 
     useEffect(() => {
-        console.log("param", params.patientSessionId);
-        fetch(`http://localhost:3000/api/patient-session-data/${params.sessionId}`, {
+        fetch(`/api/patient-session-data/${params.sessionId}`, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
+            },
+        })
+            .then((data) =>
+                data.json().then((sessions) => {
+                    const session = sessions[0];
+                    console.log("session-data", session);
+                    setSession(session.session);
+                    setName(session.name);
+                    setBodyArea(session.bodyArea);
+                    searchMetrics(session.name).then((metrics) => {
+                        setData(metrics);
+                    });
+                })
+            )
+            .catch((error) => console.error("Failed to get data:", error));
+    }, []);
+
+    // Memoized message processing function
+    const processMessage = useCallback(
+        debounce(async (msg: string) => {
+            const value = parseFloat(msg);
+
+            if (isNaN(value)) {
+                console.log("Invalid float value:", msg);
+                return;
             }
-        }).then(data => {
-            data.json().then(sessions => {
-                const session = sessions[0];
-                console.log("session-data", session);
-                setSession(session.session);
-                setName(session.name);
-                setBodyArea(session.bodyArea);
-                searchMetrics(session.name).then(metrics => {
-                    setData(metrics);
+
+            if (processedValues.current.has(value) || session === 0) {
+                console.log("Value already processed:", value);
+                return;
+            }
+
+            const body = JSON.stringify({
+                patientSessionId: params.sessionId,
+                value,
+            });
+
+            console.log("metric body", body);
+
+            try {
+                const response = await fetch("/api/metric-data", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body,
+                });
+
+                const metric = await response.json();
+                const formattedMetric = {
+                    id: metric.id,
+                    value,
+                    session,
+                };
+
+                setData((prevData) => [...prevData, formattedMetric]);
+                console.log("Metric created", formattedMetric);
+
+                processedValues.current.add(value);
+            } catch (error) {
+                console.error("Failed to add data:", error);
+            }
+        }, 1000),
+        [params.sessionId, session]
+    );
+
+    useEffect(() => {
+        if (!clientRef.current) {
+            const client = mqtt.connect(brokerUrl);
+            clientRef.current = client;
+
+            client.on("connect", () => {
+                console.log("Connected to MQTT broker");
+                client.subscribe(topic, (err) => {
+                    if (err) {
+                        console.error("Failed to subscribe:", err.message);
+                    } else {
+                        console.log(`Subscribed to topic: ${topic}`);
+                    }
                 });
             });
-        }).catch(error => console.error("Failed to get data:", error));
 
-    }, [params.patientId]);
-
-    client.on("connect", () => {
-        console.log("Connected to MQTT broker");
-        client.subscribe(topic, (err) => {
-            if (err) {
-                console.error("Failed to subscribe:", err.message);
-            } else {
-                console.log(`Subscribed to topic: ${topic}`);
-            }
-        });
-    });
-
-    client.on("message", async (topic, message) => {
-        //TODO: avoid saving duplicated messages
-        const msg = message.toString();
-        console.log(`Message received on ${topic}: ${msg}`);
-
-        const value = parseFloat(msg);
-
-        if (isNaN(value)) {
-            console.log("Invalid value:", msg);
-            return;
-        }
-
-        const body = JSON.stringify({
-            patientSessionId: params.sessionId,
-            value: parseFloat(msg),
-        });
-
-        console.log("metric body", body);
-
-        try {
-            const response = await fetch("http://localhost:3000/api/metric-data", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body,
+            client.on("message", (topic, message) => {
+                const msg = message.toString();
+                console.log(`Message received on ${topic}: ${msg}`);
+                processMessage(msg);
             });
 
-            const metric = await response.json();
-            const formattedMetric = {
-                id: metric.id,
-                value,
-                session
-            }
-
-            setData((prevData) => [...prevData, formattedMetric]);
-            console.log("Metric created", data);
-        } catch (error) {
-            console.error("Failed to add data:", error);
+            client.on("error", (err) => {
+                console.error("MQTT connection error:", err.message);
+            });
         }
-    });
 
-    client.on("error", (err) => {
-        console.error("MQTT connection error:", err.message);
-    });
+        return () => {
+            if (clientRef.current) {
+                clientRef.current.end();
+                clientRef.current = null;
+            }
+        };
+    }, [processMessage]);
 
     const finish = async () => {
         router.push("/");
@@ -136,11 +178,11 @@ const Patient: React.FC = () => {
                 </Typography>
                 <MetricsTable data={data} />
             </div>
-            <Button fullWidth variant="contained" onClick={finish} width="50%">
+            <Button fullWidth variant="contained" onClick={finish}>
                 Finalizar Atendimento
             </Button>
         </div>
     );
-}
+};
 
 export default Patient;
