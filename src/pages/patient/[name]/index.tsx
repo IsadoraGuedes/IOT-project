@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import Typography from "@mui/material/Typography";
 import MetricsTable from "@/pages/metricsTable";
 import { useParams, useRouter } from "next/navigation";
-import prisma from "../../database/db";
 import mqtt from "mqtt";
 
 const Patient: React.FC = () => {
@@ -18,20 +17,24 @@ const Patient: React.FC = () => {
     const client = mqtt.connect(brokerUrl);
 
     useEffect(() => {
-        console.log('params', params);
-        setSession(1);
-        setName("Nome do Paciente");
-        setBodyArea("Região de Medição");
-
-        prisma.patientData.findMany({
-            where: {
-                name: Array.isArray(params.name) ? params.name[0] : params.name,
-            },
-        }).then(data => {
-            setData([]);
-            console.log(data);
+        getPatientData().then(patientData => {
+            fetch(`http://localhost:3000/api/session-data/${patientData.id}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                }
+            }).then(data => {
+                data.json().then(sessions => {
+                    console.log("session-data", sessions);
+                    setData(sessions);
+                    setSession(1);
+                    setName(patientData.name);
+                    setBodyArea("Região de Medição");
+                });
+            }).catch(error => console.error("Failed to add data:", error));
         });
-    }, [params.name]);
+
+    }, [params.patientId]);
 
     client.on("connect", () => {
         console.log("Connected to MQTT broker");
@@ -49,7 +52,7 @@ const Patient: React.FC = () => {
         console.log(`Message received on ${topic}: ${msg}`);
 
         const body = JSON.stringify({
-            name,
+            patientId: params.patientId,
             session,
             value: parseFloat(msg),
             bodyArea,
@@ -59,7 +62,7 @@ const Patient: React.FC = () => {
         console.log(body);
 
         try {
-            await fetch("http://localhost:3000/api/patient-data", {
+            await fetch("http://localhost:3000/api/session-data", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -78,6 +81,17 @@ const Patient: React.FC = () => {
 
     const finish = async () => {
         router.push("/");
+    };
+
+    const getPatientData = async () => {
+        const response = await fetch(`/api/patient-data/${params.name}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        return await response.json();
     };
 
     return (
