@@ -12,13 +12,18 @@ export default async function handler(req: any, res: any) {
                 },
             });
 
-            // Find all metrics for each session
+            // Fetch metrics and include session information
             const metrics = await Promise.all(sessions.map(async (session) => {
-                return await prisma.metricSession.findMany({
+                const sessionMetrics = await prisma.metricSession.findMany({
                     where: {
                         patientSessionId: session.id,
                     },
                 });
+
+                return sessionMetrics.map(metric => ({
+                    ...metric,
+                    session: session.session,
+                }));
             }));
 
             const flattenedMetrics = metrics.flat();
